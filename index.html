@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#121214">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Calculadora</title>
+  
+  <style>
+    :root {
+      --bg: #0f1015;
+      --card-bg: rgba(26, 29, 36, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #ff9f0a;
+      --accent-hover: #e08b04;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-dim: #94a3b8;
+      --calc-btn: #1e222d;
+      --calc-btn-hover: #2a3040;
+      --calc-func: #2f3545;
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 900px;
+      position: relative;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    @media (min-width: 480px) {
+      .app-container {
+        height: 92vh;
+        border-radius: 36px;
+        border: 1px solid var(--card-border);
+      }
+    }
+
+    /* ---------------- CALCULADORA ---------------- */
+    #calc-view {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 24px;
+      justify-content: flex-end;
+    }
+
+    .calc-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-end;
+      min-height: 140px;
+      margin-bottom: 24px;
+      word-break: break-all;
+    }
+
+    .calc-history {
+      font-size: 1.25rem;
+      color: var(--text-dim);
+      min-height: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    .calc-input {
+      font-size: 3.5rem;
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--text-main);
+      transition: font-size 0.15s ease;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .calc-btn {
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 50%;
+      background: var(--calc-btn);
+      color: var(--text-main);
+      font-size: 1.6rem;
+      font-weight: 400;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .calc-btn:active {
+      transform: scale(0.92);
+      filter: brightness(1.25);
+    }
+
+    .calc-btn.function {
+      background: var(--calc-func);
+      color: #e2e8f0;
+      font-size: 1.35rem;
+    }
+
+    .calc-btn.op {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .calc-btn.op:active {
+      background: var(--accent-hover);
+    }
+
+    .calc-btn.zero {
+      grid-column: span 2;
+      aspect-ratio: auto;
+      border-radius: 40px;
+      justify-content: flex-start;
+      padding-left: 30px;
+    }
+
+    /* ---------------- COFRE SECRETO ---------------- */
+    #vault-view {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      background: #111318;
+      backdrop-filter: blur(20px);
+    }
+
+    .vault-header {
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(17, 19, 24, 0.95);
+    }
+
+    .vault-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-panic {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+
+    .btn-panic:active {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .vault-tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 6px;
+      margin: 12px 18px;
+      border-radius: 12px;
+      gap: 6px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .vault-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 18px 80px 18px;
+    }
+
+    /* Galeria */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding-top: 8px;
+    }
+
+    .gallery-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #1e222d;
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+    }
+
+    .gallery-item img, .gallery-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .gallery-item .delete-tag {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Notas */
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-top: 8px;
+    }
+
+    .note-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .note-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+    }
+
+    .note-date {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .note-body {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      max-height: 100px;
+      overflow: hidden;
+    }
+
+    .btn-delete-note {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    /* Floating Action Button (FAB) */
+    .fab-btn {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .fab-btn:active {
+      transform: scale(0.9);
+    }
+
+    /* Modais */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #181a20;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-input, .modal-textarea {
+      width: 100%;
+      background: #232732;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .modal-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-action {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-dim);
+    }
+
+    /* Configurações Tab */
+    .settings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-top: 10px;
+    }
+
+    .setting-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .preview-modal img, .preview-modal video {
+      max-width: 90vw;
+      max-height: 80vh;
+      border-radius: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- TELA 1: CALCULADORA DISFARÇADA -->
+    <div id="calc-view">
+      <div class="calc-screen">
+        <div class="calc-history" id="calcHistory"></div>
+        <div class="calc-input" id="calcDisplay">0</div>
+      </div>
+      <div class="calc-grid">
+        <button class="calc-btn function" onclick="calcAction('clear')">AC</button>
+        <button class="calc-btn function" onclick="calcAction('+/-')">±</button>
+        <button class="calc-btn function" onclick="calcAction('%')">%</button>
+        <button class="calc-btn op" onclick="calcAction('/')">÷</button>
+
+        <button class="calc-btn" onclick="calcDigit('7')">7</button>
+        <button class="calc-btn" onclick="calcDigit('8')">8</button>
+        <button class="calc-btn" onclick="calcDigit('9')">9</button>
+        <button class="calc-btn op" onclick="calcAction('*')">×</button>
+
+        <button class="calc-btn" onclick="calcDigit('4')">4</button>
+        <button class="calc-btn" onclick="calcDigit('5')">5</button>
+        <button class="calc-btn" onclick="calcDigit('6')">6</button>
+        <button class="calc-btn op" onclick="calcAction('-')">−</button>
+
+        <button class="calc-btn" onclick="calcDigit('1')">1</button>
+        <button class="calc-btn" onclick="calcDigit('2')">2</button>
+        <button class="calc-btn" onclick="calcDigit('3')">3</button>
+        <button class="calc-btn op" onclick="calcAction('+')">+</button>
+
+        <button class="calc-btn zero" onclick="calcDigit('0')">0</button>
+        <button class="calc-btn" onclick="calcDigit('.')">,</button>
+        <button class="calc-btn op" onclick="calcEqual()">=</button>
+      </div>
+    </div>
+
+    <!-- TELA 2: COFRE SECRETO -->
+    <div id="vault-view">
+      <div class="vault-header">
+        <div class="vault-title">
+          <span>🔒 Cofre Secreto</span>
+        </div>
+        <button class="btn-panic" onclick="lockVault()">
+          <span>✕</span> Sair (Pânico)
+        </button>
+      </div>
+
+      <div class="vault-tabs">
+        <button class="tab-btn active" onclick="switchTab('gallery')">📷 Fotos & Vídeos</button>
+        <button class="tab-btn" onclick="switchTab('notes')">📝 Notas</button>
+        <button class="tab-btn" onclick="switchTab('settings')">⚙️ Ajustes</button>
+      </div>
+
+      <div class="vault-content">
+        <!-- Galeria -->
+        <div id="tab-gallery">
+          <div class="gallery-grid" id="galleryGrid"></div>
+        </div>
+
+        <!-- Notas -->
+        <div id="tab-notes" style="display: none;">
+          <div class="notes-list" id="notesList"></div>
+        </div>
+
+        <!-- Ajustes -->
+        <div id="tab-settings" style="display: none;">
+          <div class="settings-list">
+            <div class="setting-item" onclick="promptChangePIN()">
+              <div>
+                <strong>Mudar Código PIN</strong>
+                <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px;">Altere o código de acesso secreto</p>
+              </div>
+              <span>›</span>
+            </div>
+            <div class="setting-item" onclick="exportDataBackup()">
+              <div>
+                <strong>Backup de Arquivos</strong>
+                <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px;">Salvar fotos e notas no celular</p>
+              </div>
+              <span>›</span>
+            </div>
+            <div class="setting-item" onclick="deleteAllVaultData()" style="color: var(--danger)">
+              <div>
+                <strong>Excluir Todo o Cofre</strong>
+                <p style="font-size:0.8rem; color:rgba(239, 68, 68, 0.7); margin-top:4px;">Apagar permanentemente todos os arquivos</p>
+              </div>
+              <span>⚠️</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botão Flutuante + -->
+      <button class="fab-btn" id="fabButton" onclick="handleFabClick()">+</button>
+      <input type="file" id="mediaInput" accept="image/*,video/*" multiple style="display:none" onchange="onFilesSelected(event)">
+    </div>
+
+  </div>
+
+  <!-- MODAL: NOVA NOTA -->
+  <div class="modal" id="noteModal">
+    <div class="modal-content">
+      <h3 style="font-size:1.15rem">Nova Nota Secreta</h3>
+      <input type="text" id="noteTitle" class="modal-input" placeholder="Título da nota...">
+      <textarea id="noteText" class="modal-textarea" placeholder="Escreva seu segredo aqui..."></textarea>
+      <div class="modal-actions">
+        <button class="btn-action btn-secondary" onclick="closeNoteModal()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="saveNote()">Salvar Nota</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PREVIEW DE MÍDIA -->
+  <div class="modal preview-modal" id="previewModal" onclick="closePreviewModal()">
+    <div id="previewContainer"></div>
+  </div>
+
+  <script>
+    /* ========================================================
+       1. BANCO DE DADOS LOCAL (IndexedDB)
+       Capaz de salvar gigabytes de fotos/vídeos sem anúncios ou nuvem
+    ======================================================== */
+    const DB_NAME = 'VaultSecureStorage_v1';
+    let db;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const dbInstance = e.target.result;
+          if (!dbInstance.objectStoreNames.contains('media')) {
+            dbInstance.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
+          }
+          if (!dbInstance.objectStoreNames.contains('notes')) {
+            dbInstance.createObjectStore('notes', { keyPath: 'id', autoIncrement: true });
+          }
+        };
+        req.onsuccess = (e) => {
+          db = e.target.result;
+          resolve();
+        };
+        req.onerror = (e) => reject(e);
+      });
+    }
+
+    async function dbAdd(storeName, data) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.add(data);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbGetAll(storeName) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbDelete(storeName, id) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    /* ========================================================
+       2. LÓGICA DA CALCULADORA E DESBLOQUEIO POR CÓDIGO
+    ======================================================== */
+    let currentInput = '0';
+    let previousInput = '';
+    let operation = null;
+    let shouldResetDisplay = false;
+
+    // Configurações do PIN
+    let storedPin = localStorage.getItem('vault_pin');
+
+    const display = document.getElementById('calcDisplay');
+    const history = document.getElementById('calcHistory');
+
+    function updateCalcScreen() {
+      display.textContent = currentInput;
+      if (currentInput.length > 7) {
+        display.style.fontSize = '2.2rem';
+      } else {
+        display.style.fontSize = '3.5rem';
+      }
+    }
+
+    function calcDigit(digit) {
+      if (currentInput === '0' && digit !== '.') {
+        currentInput = digit;
+      } else if (shouldResetDisplay) {
+        currentInput = digit;
+        shouldResetDisplay = false;
+      } else {
+        if (digit === '.' && currentInput.includes('.')) return;
+        currentInput += digit;
+      }
+      updateCalcScreen();
+    }
+
+    function calcAction(op) {
+      if (op === 'clear') {
+        currentInput = '0';
+        previousInput = '';
+        operation = null;
+        history.textContent = '';
+      } else if (op === '+/-') {
+        currentInput = (parseFloat(currentInput) * -1).toString();
+      } else if (op === '%') {
+        currentInput = (parseFloat(currentInput) / 100).toString();
+      } else {
+        operation = op;
+        previousInput = currentInput;
+        history.textContent = `${previousInput} ${getSymbol(op)}`;
+        shouldResetDisplay = true;
+      }
+      updateCalcScreen();
+    }
+
+    function getSymbol(op) {
+      if (op === '/') return '÷';
+      if (op === '*') return '×';
+      if (op === '-') return '−';
+      return '+';
+    }
+
+    function calcEqual() {
+      // 1. CHECAGEM DO CÓDIGO DO COFRE
+      if (!storedPin) {
+        // Primeiro acesso: definir o PIN
+        if (currentInput.length >= 4) {
+          storedPin = currentInput;
+          localStorage.setItem('vault_pin', storedPin);
+          alert(`Código secreto "${storedPin}" configurado com sucesso! Digite-o e aperte "=" sempre que quiser entrar.`);
+          calcAction('clear');
+          return;
+        } else {
+          alert('Para o primeiro acesso, digite 4 ou mais números e aperte "=" para criar seu PIN secreto.');
+          return;
+        }
+      } else if (currentInput === storedPin) {
+        // Senha Correta! Abre o cofre
+        openVault();
+        calcAction('clear');
+        return;
+      }
+
+      // 2. CASO SEJA APENAS UMA CONTA NORMAL
+      if (!operation || !previousInput) return;
+      const prev = parseFloat(previousInput);
+      const curr = parseFloat(currentInput);
+      let result = 0;
+
+      switch (operation) {
+        case '+': result = prev + curr; break;
+        case '-': result = prev - curr; break;
+        case '*': result = prev * curr; break;
+        case '/': result = curr !== 0 ? prev / curr : 'Erro'; break;
+      }
+
+      history.textContent = `${previousInput} ${getSymbol(operation)} ${currentInput} =`;
+      currentInput = result.toString();
+      operation = null;
+      shouldResetDisplay = true;
+      updateCalcScreen();
+    }
+
+    /* ========================================================
+       3. CONTROLE DO COFRE SECRETO
+    ======================================================== */
+    let currentTab = 'gallery';
+
+    function openVault() {
+      document.getElementById('calc-view').style.display = 'none';
+      document.getElementById('vault-view').style.display = 'flex';
+      loadMedia();
+      loadNotes();
+    }
+
+    function lockVault() {
+      document.g
